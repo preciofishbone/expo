@@ -1,6 +1,7 @@
 package expo.modules.updates
 
 import android.content.Context
+import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +18,7 @@ import expo.modules.updates.loader.FileDownloader.ManifestDownloadCallback
 import expo.modules.updates.loader.Loader
 import expo.modules.updates.loader.RemoteLoader
 import expo.modules.updates.manifest.UpdateManifest
+import java.util.Date
 
 // these unused imports must stay because of versioning
 /* ktlint-disable no-unused-imports */

@@ -29,14 +29,15 @@ class UpdatesConfiguration private constructor (
   }
 
   constructor(context: Context?, overrideMap: Map<String, Any>?) : this(
-    isEnabled = overrideMap?.readValueCheckingType<Boolean>(UPDATES_CONFIGURATION_ENABLED_KEY) ?: context?.getMetadataValue("expo.modules.updates.ENABLED") ?: true,
-    expectsSignedManifest = overrideMap?.readValueCheckingType(UPDATES_CONFIGURATION_EXPECTS_EXPO_SIGNED_MANIFEST) ?: false,
+    isRuntimeServerUrl = overrideMap?.readValueCheckingType<Boolean>(UPDATES_CONFIGURATION_RUNTIME_SERVER_URL)?:false,
     scopeKey = maybeGetDefaultScopeKey(
       overrideMap?.readValueCheckingType<String>(UPDATES_CONFIGURATION_SCOPE_KEY_KEY) ?: context?.getMetadataValue("expo.modules.updates.EXPO_SCOPE_KEY"),
       updateUrl = overrideMap?.readValueCheckingType<Uri>(UPDATES_CONFIGURATION_UPDATE_URL_KEY) ?: context?.getMetadataValue<String>("expo.modules.updates.EXPO_UPDATE_URL")?.let { Uri.parse(it) },
     ),
     updateUrl = overrideMap?.readValueCheckingType<Uri>(UPDATES_CONFIGURATION_UPDATE_URL_KEY) ?: context?.getMetadataValue<String>("expo.modules.updates.EXPO_UPDATE_URL")?.let { Uri.parse(it) },
     sdkVersion = overrideMap?.readValueCheckingType<String>(UPDATES_CONFIGURATION_SDK_VERSION_KEY) ?: context?.getMetadataValue("expo.modules.updates.EXPO_SDK_VERSION"),
+    isEnabled = overrideMap?.readValueCheckingType<Boolean>(UPDATES_CONFIGURATION_ENABLED_KEY) ?: context?.getMetadataValue("expo.modules.updates.ENABLED") ?: true,
+    expectsSignedManifest = overrideMap?.readValueCheckingType(UPDATES_CONFIGURATION_EXPECTS_EXPO_SIGNED_MANIFEST) ?: false,
     runtimeVersion = overrideMap?.readValueCheckingType<String>(UPDATES_CONFIGURATION_RUNTIME_VERSION_KEY) ?: context?.getMetadataValue<Any>("expo.modules.updates.EXPO_RUNTIME_VERSION")?.toString()?.replaceFirst("^string:".toRegex(), ""),
     releaseChannel = overrideMap?.readValueCheckingType<String>(UPDATES_CONFIGURATION_RELEASE_CHANNEL_KEY) ?: context?.getMetadataValue("expo.modules.updates.EXPO_RELEASE_CHANNEL") ?: UPDATES_CONFIGURATION_RELEASE_CHANNEL_DEFAULT_VALUE,
     launchWaitMs = overrideMap?.readValueCheckingType<Int>(UPDATES_CONFIGURATION_LAUNCH_WAIT_MS_KEY) ?: context?.getMetadataValue("expo.modules.updates.EXPO_UPDATES_LAUNCH_WAIT_MS") ?: UPDATES_CONFIGURATION_LAUNCH_WAIT_MS_DEFAULT_VALUE,
@@ -85,7 +86,7 @@ class UpdatesConfiguration private constructor (
 
   companion object {
     private val TAG = UpdatesConfiguration::class.java.simpleName
-
+    const val UPDATES_CONFIGURATION_RUNTIME_SERVER_URL = "runtimeServerUrl"
     const val UPDATES_CONFIGURATION_ENABLED_KEY = "enabled"
     const val UPDATES_CONFIGURATION_SCOPE_KEY_KEY = "scopeKey"
     const val UPDATES_CONFIGURATION_UPDATE_URL_KEY = "updateUrl"

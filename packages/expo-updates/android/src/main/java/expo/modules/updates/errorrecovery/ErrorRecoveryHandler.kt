@@ -66,7 +66,8 @@ internal class ErrorRecoveryHandler(
   private fun runNextTask() {
     when (val nextTask = pipeline.removeAt(0)) {
       Task.WAIT_FOR_REMOTE_UPDATE -> waitForRemoteUpdate()
-      Task.LAUNCH_NEW_UPDATE -> tryRelaunchFromCache() // only called after a new update is downloaded and added to the cache, so the implementation is equivalent
+      Task.LAUNCH_NEW_UPDATE -> tryRelaunchFromCache()
+       // only called after a new update is downloaded and added to the cache, so the implementation is equivalent
       Task.LAUNCH_CACHED_UPDATE -> tryRelaunchFromCache()
       Task.CRASH -> crash()
       else -> throw RuntimeException("ErrorRecoveryHandler cannot perform task $nextTask")

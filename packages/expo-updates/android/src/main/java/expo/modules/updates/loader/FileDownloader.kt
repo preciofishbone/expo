@@ -29,8 +29,8 @@ import expo.modules.updates.db.entity.UpdateEntity
 import expo.modules.updates.manifest.*
 import java.security.cert.CertificateException
 
-open class FileDownloader(private val client: OkHttpClient) {
-  constructor(context: Context) : this(OkHttpClient.Builder().cache(getCache(context)).build())
+open class FileDownloader(context: Context, private val client: OkHttpClient) {
+  constructor(context: Context) : this(context, OkHttpClient.Builder().cache(getCache(context)).build())
 
   interface FileDownloadCallback {
     fun onFailure(e: Exception)
@@ -72,7 +72,7 @@ open class FileDownloader(private val client: OkHttpClient) {
               callback.onSuccess(destination, hash)
             }
           } catch (e: Exception) {
-            Log.e(TAG, "Failed to download file to destination $destination", e)
+            logger.error("Failed to download file to destination $destination: ${e.localizedMessage}", UpdatesErrorCode.AssetsFailedToLoad, e)
             callback.onFailure(e)
           }
         }
@@ -86,6 +86,7 @@ open class FileDownloader(private val client: OkHttpClient) {
     if (isMultipart) {
       val boundaryParameter = ParameterParser().parse(contentType, ';')["boundary"]
       if (boundaryParameter == null) {
+        val message = "Missing boundary in multipart manifest content-type"
         callback.onFailure(
           "Missing boundary in multipart manifest content-type",
           IOException("Missing boundary in multipart manifest content-type")
@@ -154,6 +155,7 @@ open class FileDownloader(private val client: OkHttpClient) {
         nextPart = multipartStream.readBoundary()
       }
     } catch (e: Exception) {
+      val message = "Error while reading multipart manifest response"
       callback.onFailure(
         "Error while reading multipart manifest response",
         e
@@ -162,13 +164,15 @@ open class FileDownloader(private val client: OkHttpClient) {
     }
 
     if (manifestPartBodyAndHeaders == null) {
-      callback.onFailure("Multipart manifest response missing manifest part", IOException("Malformed multipart manifest response"))
+      val message = "Multipart manifest response missing manifest part"
+      callback.onFailure(message, IOException("Malformed multipart manifest response"))
       return
     }
 
     val extensions = try {
       extensionsBody?.let { JSONObject(it) }
     } catch (e: Exception) {
+      val message = "Failed to parse multipart manifest extensions"
       callback.onFailure(
         "Failed to parse multipart manifest extensions",
         e
@@ -242,6 +246,7 @@ open class FileDownloader(private val client: OkHttpClient) {
                   callback.onFailure("Failed to parse manifest data", e)
                 }
               } else {
+                val message = "Manifest signature is invalid; aborting"
                 callback.onFailure(
                   "Manifest signature is invalid; aborting",
                   Exception("Manifest signature is invalid")
@@ -254,6 +259,7 @@ open class FileDownloader(private val client: OkHttpClient) {
         checkCodeSigningAndCreateManifest(manifestBody, preManifest, manifestHeaderData, extensions, certificateChainFromManifestResponse, false, configuration, callback)
       }
     } catch (e: Exception) {
+      val message = "Failed to parse manifest data: ${e.localizedMessage}"
       callback.onFailure(
         "Failed to parse manifest data",
         e
@@ -272,6 +278,7 @@ open class FileDownloader(private val client: OkHttpClient) {
         createRequestForManifest(configuration, extraHeaders, context),
         object : Callback {
           override fun onFailure(call: Call, e: IOException) {
+            val message = "Failed to download manifest from URL: ${configuration.updateUrl}: ${e.localizedMessage}"
             callback.onFailure(
               "Failed to download manifest from URL: " + configuration.updateUrl,
               e
@@ -281,6 +288,7 @@ open class FileDownloader(private val client: OkHttpClient) {
           @Throws(IOException::class)
           override fun onResponse(call: Call, response: Response) {
             if (!response.isSuccessful) {
+              val message = "Failed to download manifest from URL: ${configuration.updateUrl}"
               callback.onFailure(
                 "Failed to download manifest from URL: " + configuration.updateUrl,
                 Exception(
@@ -295,6 +303,7 @@ open class FileDownloader(private val client: OkHttpClient) {
         }
       )
     } catch (e: Exception) {
+      val message = "Failed to download manifest from URL: ${configuration.updateUrl}: ${e.localizedMessage}"
       callback.onFailure(
         "Failed to download manifest from URL " + configuration.updateUrl.toString(),
         e
@@ -310,7 +319,8 @@ open class FileDownloader(private val client: OkHttpClient) {
     callback: AssetDownloadCallback
   ) {
     if (asset.url == null) {
-      callback.onFailure(Exception("Could not download asset " + asset.key + " with no URL"), asset)
+      val message = "Could not download asset " + asset.key + " with no URL"
+      callback.onFailure(Exception(message), asset)
       return
     }
     val filename = UpdatesUtils.createFilenameForAsset(asset)
