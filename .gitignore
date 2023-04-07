@@ -142,3 +142,7 @@ docs/pages/versions/*/react-native/*.diff
 # iOS
 /ios/Pods
 /ios/build
+**/ios/.xcode.env.local
+/ios/versioned-react-native/*/ReactNative/sdks/hermes-engine/destroot
+/.vs
+omnia-feed-expo.code-workspace
