@@ -59,6 +59,7 @@ FOUNDATION_EXPORT NSString * const EXUpdatesConfigCheckOnLaunchValueNever;
 + (instancetype)configWithExpoPlist;
 + (instancetype)configWithDictionary:(NSDictionary *)config;
 - (void)loadConfigFromDictionary:(NSDictionary *)config;
+- (void)setServerUrl:(NSString *)serverUrl;
 
 + (NSString *)normalizedURLOrigin:(NSURL *)url;
 

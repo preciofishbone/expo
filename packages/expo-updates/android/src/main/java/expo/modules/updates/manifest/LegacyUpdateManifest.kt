@@ -25,7 +25,8 @@ class LegacyUpdateManifest private constructor(
   private val mRuntimeVersion: String,
   private val mBundleUrl: Uri,
   private val mAssets: JSONArray?
-) : UpdateManifest {
+) : UpdateManifest
+{
   override val serverDefinedHeaders: JSONObject? = null
 
   override val manifestFilters: JSONObject? = null
@@ -112,8 +113,14 @@ class LegacyUpdateManifest private constructor(
       }
 
       val runtimeVersion = manifest.getRuntimeVersion() ?: manifest.getSDKVersion() ?: throw Exception("sdkVersion should not be null")
-      val bundleUrl = Uri.parse(manifest.getBundleURL())
+      var bundleUrl = Uri.parse(manifest.getBundleURL())
       val bundledAssets = manifest.getBundledAssets()
+
+      if(configuration.isRuntimeServerUrl)
+      {
+        bundleUrl = bundleUrl.buildUpon().authority(configuration.scopeKey).build()
+      }
+
       return LegacyUpdateManifest(
         manifest,
         configuration.updateUrl!!,

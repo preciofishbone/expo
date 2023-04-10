@@ -97,6 +97,16 @@ const manualUpdatesInstructions = isUsingExpoDevelopmentClient
   : 'To test manual updates, make a release build with `npm run ios --configuration Release` or ' +
     '`npm run android --variant Release`.';
 
+
+/**
+ * Omnia Feed additional method to set serverURl to load updates
+*/
+export async function setServerUrlAsync(url: string): Promise<boolean>
+{
+    const result = await ExpoUpdates.setServerUrlAsync(url);
+    return result;
+}
+
 /**
  * Instructs the app to reload using the most recently downloaded version. This is useful for
  * triggering a newly downloaded update to launch without the user needing to manually restart the
@@ -125,12 +135,12 @@ export async function reloadAsync(): Promise<void> {
   if (!ExpoUpdates.reload) {
     throw new UnavailabilityError('Updates', 'reloadAsync');
   }
-  if (__DEV__ && !isUsingExpoDevelopmentClient) {
-    throw new CodedError(
-      'ERR_UPDATES_DISABLED',
-      `You cannot use the Updates module in development mode in a production app. ${manualUpdatesInstructions}`
-    );
-  }
+  // if (__DEV__ && !isUsingExpoDevelopmentClient) {
+  //   throw new CodedError(
+  //     'ERR_UPDATES_DISABLED',
+  //     `You cannot use the Updates module in development mode in a production app. ${manualUpdatesInstructions}`
+  //   );
+  // }
   await ExpoUpdates.reload();
 }
 
@@ -153,12 +163,12 @@ export async function checkForUpdateAsync(): Promise<UpdateCheckResult> {
   if (!ExpoUpdates.checkForUpdateAsync) {
     throw new UnavailabilityError('Updates', 'checkForUpdateAsync');
   }
-  if (__DEV__ || isUsingDeveloperTool) {
-    throw new CodedError(
-      'ERR_UPDATES_DISABLED',
-      `You cannot check for updates in development mode. ${manualUpdatesInstructions}`
-    );
-  }
+  // if (__DEV__ || isUsingDeveloperTool) {
+  //   throw new CodedError(
+  //     'ERR_UPDATES_DISABLED',
+  //     `You cannot check for updates in development mode. ${manualUpdatesInstructions}`
+  //   );
+  // }
 
   const result = await ExpoUpdates.checkForUpdateAsync();
   if (result.manifestString) {
@@ -183,12 +193,12 @@ export async function fetchUpdateAsync(): Promise<UpdateFetchResult> {
   if (!ExpoUpdates.fetchUpdateAsync) {
     throw new UnavailabilityError('Updates', 'fetchUpdateAsync');
   }
-  if (__DEV__ || isUsingDeveloperTool) {
-    throw new CodedError(
-      'ERR_UPDATES_DISABLED',
-      `You cannot fetch updates in development mode. ${manualUpdatesInstructions}`
-    );
-  }
+  // if (__DEV__ || isUsingDeveloperTool) {
+  //   throw new CodedError(
+  //     'ERR_UPDATES_DISABLED',
+  //     `You cannot fetch updates in development mode. ${manualUpdatesInstructions}`
+  //   );
+  // }
 
   const result = await ExpoUpdates.fetchUpdateAsync();
   if (result.manifestString) {

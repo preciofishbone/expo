@@ -8,6 +8,12 @@
 #import <EXUpdates/EXUpdatesService.h>
 #import <EXUpdates/EXUpdatesUpdate.h>
 
+#if __has_include(<EXUpdates/EXUpdates-Swift.h>)
+#import <EXUpdates/EXUpdates-Swift.h>
+#else
+#import "EXUpdates-Swift.h"
+#endif
+
 @interface EXUpdatesModule ()
 
 @property (nonatomic, weak) id<EXUpdatesModuleInterface> updatesService;
@@ -65,6 +71,25 @@ EX_EXPORT_MODULE(ExpoUpdates);
     @"channel": channel,
     @"commitTime": @(commitTime)
   };
+}
+
+EX_EXPORT_METHOD_AS(setServerUrlAsync,
+                    setServerUrlAsync:(NSString *)serverUrl
+                              resolve:(EXPromiseResolveBlock)resolve
+                               reject:(EXPromiseRejectBlock)reject)
+{
+    if (!_updatesService.config.isEnabled)
+    {
+        reject(@"ERR_UPDATES_DISABLED", @"You cannot reload when expo-updates is not enabled.", nil);
+        return;
+    }
+    
+    [_updatesService.config setServerUrl:serverUrl];
+    
+    resolve(@{
+      @"updateUrl": _updatesService.config.updateUrl,
+      @"scopeKey": _updatesService.config.scopeKey
+    });
 }
 
 EX_EXPORT_METHOD_AS(reload,

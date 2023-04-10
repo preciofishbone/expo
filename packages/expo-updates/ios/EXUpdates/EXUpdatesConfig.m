@@ -88,6 +88,16 @@ NSString * const EXUpdatesConfigCheckOnLaunchValueNever = @"NEVER";
   return [[self class] configWithDictionary:[NSDictionary dictionaryWithContentsOfFile:configPath]];
 }
 
+- (void)setServerUrl:(NSString *)serverUrl
+{
+    NSURL *url = [NSURL URLWithString:(NSString *)serverUrl];
+    _updateUrl = url;
+    
+    if (_updateUrl) {
+      _scopeKey = [[self class] normalizedURLOrigin:_updateUrl];
+    }
+}
+
 - (void)loadConfigFromDictionary:(NSDictionary *)config
 {
   id isEnabled = config[EXUpdatesConfigEnabledKey];

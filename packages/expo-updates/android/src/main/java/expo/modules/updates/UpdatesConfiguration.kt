@@ -7,10 +7,11 @@ import android.util.Log
 import expo.modules.updates.codesigning.CodeSigningConfiguration
 
 class UpdatesConfiguration private constructor (
+  var isRuntimeServerUrl: Boolean,
+  var scopeKey: String?,
+  var updateUrl: Uri?,
   val isEnabled: Boolean,
   val expectsSignedManifest: Boolean,
-  val scopeKey: String?,
-  val updateUrl: Uri?,
   val sdkVersion: String?,
   val runtimeVersion: String?,
   val releaseChannel: String,
@@ -28,6 +29,7 @@ class UpdatesConfiguration private constructor (
   }
 
   constructor(context: Context?, overrideMap: Map<String, Any>?) : this(
+    isRuntimeServerUrl = overrideMap?.readValueCheckingType<Boolean>(UPDATES_CONFIGURATION_RUNTIME_SERVER_URL)?:false,
     isEnabled = overrideMap?.readValueCheckingType<Boolean>(UPDATES_CONFIGURATION_ENABLED_KEY) ?: context?.getMetadataValue("expo.modules.updates.ENABLED") ?: true,
     expectsSignedManifest = overrideMap?.readValueCheckingType(UPDATES_CONFIGURATION_EXPECTS_EXPO_SIGNED_MANIFEST) ?: false,
     scopeKey = maybeGetDefaultScopeKey(
@@ -84,7 +86,7 @@ class UpdatesConfiguration private constructor (
 
   companion object {
     private val TAG = UpdatesConfiguration::class.java.simpleName
-
+    const val UPDATES_CONFIGURATION_RUNTIME_SERVER_URL = "runtimeServerUrl"
     const val UPDATES_CONFIGURATION_ENABLED_KEY = "enabled"
     const val UPDATES_CONFIGURATION_SCOPE_KEY_KEY = "scopeKey"
     const val UPDATES_CONFIGURATION_UPDATE_URL_KEY = "updateUrl"
