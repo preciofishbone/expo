@@ -140,17 +140,6 @@ static NSString * const EXUpdatesUtilsErrorDomain = @"EXUpdatesUtils";
     : [[NSBundle mainBundle] pathForResource:asset.mainBundleFilename ofType:asset.type];
 }
 
-// Purges entries in the expo-updates log file that are older than 1 day
-+ (void)purgeUpdatesLogsOlderThanOneDay
-{
-  EXUpdatesLogReader *logReader = [EXUpdatesLogReader new];
-  [logReader purgeLogEntries:^(NSError *error) {
-    if (error) {
-      NSLog(@"EXUpdatesUtils: error in purgeOldUpdatesLogs: %@", [error localizedDescription]);
-    }
-  }];
-}
-
 @end
 
 NS_ASSUME_NONNULL_END

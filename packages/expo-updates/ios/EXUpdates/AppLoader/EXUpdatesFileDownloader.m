@@ -46,7 +46,6 @@ const NSInteger EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError = 1048
 @property (nonatomic, strong) NSURLSession *session;
 @property (nonatomic, strong) NSURLSessionConfiguration *sessionConfiguration;
 @property (nonatomic, strong) EXUpdatesConfig *config;
-@property (nonatomic, strong) EXUpdatesLogger *logger;
 
 @end
 
@@ -65,7 +64,6 @@ const NSInteger EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError = 1048
     _sessionConfiguration = sessionConfiguration;
     _session = [NSURLSession sessionWithConfiguration:_sessionConfiguration delegate:self delegateQueue:nil];
     _config = updatesConfig;
-    _logger = [EXUpdatesLogger new];
   }
   return self;
 }
@@ -98,7 +96,6 @@ const NSInteger EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError = 1048
     NSString *hashBase64String = [EXUpdatesUtils base64UrlEncodedSHA256WithData:data];
     if (expectedBase64URLEncodedSHA256Hash && ![expectedBase64URLEncodedSHA256Hash isEqualToString:hashBase64String]) {
       NSString *errorMessage = [NSString stringWithFormat:@"File download was successful but base64url-encoded SHA-256 did not match expected; expected: %@; actual: %@", expectedBase64URLEncodedSHA256Hash, hashBase64String];
-      [self->_logger error:errorMessage code:EXUpdatesErrorCodeAssetsFailedToLoad updateId:nil assetId:expectedBase64URLEncodedSHA256Hash];
       errorBlock([NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                      code:EXUpdatesFileDownloaderErrorCodeFileHashMismatchError
                                  userInfo:@{
@@ -113,7 +110,6 @@ const NSInteger EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError = 1048
       successBlock(data, response, hashBase64String);
     } else {
       NSString *errorMessage = [NSString stringWithFormat:@"Could not write to path %@: %@", destinationPath, error.localizedDescription];
-      [self->_logger error:errorMessage code:EXUpdatesErrorCodeAssetsFailedToLoad updateId:nil assetId:expectedBase64URLEncodedSHA256Hash];
       errorBlock([NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                      code:EXUpdatesFileDownloaderErrorCodeFileWriteError
                                  userInfo:@{
@@ -172,7 +168,6 @@ const NSInteger EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError = 1048
 
     if (boundaryParameterValue == nil) {
       NSString *errorMessage = @"Missing boundary in multipart manifest content-type";
-      [self->_logger error:errorMessage code:EXUpdatesErrorCodeAssetsFailedToLoad];
       NSError *error = [NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                            code:EXUpdatesFileDownloaderErrorCodeMissingMultipartBoundaryError
                                        userInfo:@{
@@ -256,7 +251,6 @@ const NSInteger EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError = 1048
                                      userInfo:@{
       NSLocalizedDescriptionKey: @"Could not read multipart manifest response",
     }];
-    [self->_logger error:error.localizedDescription code:EXUpdatesErrorCodeAssetsFailedToLoad];
     errorBlock(error);
     return;
   }
@@ -267,7 +261,6 @@ const NSInteger EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError = 1048
                                      userInfo:@{
       NSLocalizedDescriptionKey: @"Multipart manifest response missing manifest part",
     }];
-    [self->_logger error:error.userInfo[NSLocalizedDescriptionKey] code:EXUpdatesErrorCodeAssetsFailedToLoad];
     errorBlock(error);
     return;
   }
@@ -289,7 +282,6 @@ const NSInteger EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError = 1048
                                        userInfo:@{
         NSLocalizedDescriptionKey: @"Failed to parse multipart manifest extensions",
       }];
-      [self->_logger error:error.userInfo[NSLocalizedDescriptionKey] code:EXUpdatesErrorCodeAssetsFailedToLoad];
       errorBlock(error);
       return;
     }
@@ -351,7 +343,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
 
   if (![manifestString isKindOfClass:[NSString class]]) {
     NSString *errorMessage = @"manifestString should be a string";
-    [self->_logger error:errorMessage code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
     errorBlock([NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                    code:EXUpdatesFileDownloaderErrorCodeManifestStringError
                                userInfo:@{
@@ -363,7 +354,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
   NSDictionary *manifest = [NSJSONSerialization JSONObjectWithData:[(NSString *)manifestString dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:&error];
   if (error || !manifest || ![manifest isKindOfClass:[NSDictionary class]]) {
     NSString *errorMessage = @"manifest should be a valid JSON object";
-    [self->_logger error:errorMessage code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
     errorBlock([NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                    code:EXUpdatesFileDownloaderErrorCodeManifestJSONError
                                userInfo:@{
@@ -377,7 +367,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
   if (signature != nil && !isUnsignedFromXDL) {
     if (![signature isKindOfClass:[NSString class]]) {
       NSString *errorMessage = @"signature should be a string";
-      [self->_logger error:errorMessage code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
       errorBlock([NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                      code:EXUpdatesFileDownloaderErrorCodeManifestSignatureError
                                  userInfo:@{
@@ -404,7 +393,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
                                                   NSError *error = [NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                                                                        code:EXUpdatesFileDownloaderErrorCodeManifestVerificationError
                                                                                    userInfo:@{NSLocalizedDescriptionKey: @"Manifest verification failed"}];
-                                                  [self->_logger error:error.userInfo[NSLocalizedDescriptionKey] code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
                                                   errorBlock(error);
                                                 }
                                               }
@@ -435,7 +423,6 @@ certificateChainFromManifestResponse:certificateChainFromManifestResponse
   [self _downloadDataWithRequest:request successBlock:^(NSData *data, NSURLResponse *response) {
     if (![response isKindOfClass:[NSHTTPURLResponse class]]) {
       NSString *errorMessage = @"response must be a NSHTTPURLResponse";
-      [self->_logger error:errorMessage code:EXUpdatesErrorCodeUpdateFailedToLoad];
       errorBlock([NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                      code:EXUpdatesFileDownloaderErrorCodeInvalidResponseError
                                  userInfo:@{
@@ -484,7 +471,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
     if (error) {
       NSString *message = [EXUpdatesCodeSigningErrorUtils messageForError:error.code];
       NSString *errorMessage = [NSString stringWithFormat:@"Downloaded manifest signature is invalid: %@", message];
-      [self->_logger error:errorMessage code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
       errorBlock([NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                      code:EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError
                                  userInfo:@{NSLocalizedDescriptionKey: errorMessage}] );
@@ -493,7 +479,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
 
     if (signatureValidationResult.validationResult == EXUpdatesValidationResultInvalid) {
       NSString *errorMessage = @"Manifest download was successful, but signature was incorrect";
-      [self->_logger error:errorMessage code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
       errorBlock([NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                      code:EXUpdatesFileDownloaderErrorCodeCodeSigningSignatureError
                                  userInfo:@{NSLocalizedDescriptionKey: errorMessage }]);
@@ -522,7 +507,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
                                   userInfo:@{NSLocalizedDescriptionKey: [@"Failed to parse manifest: " stringByAppendingString:exception.reason] }];
         }
         if (error) {
-          [self->_logger error:error.userInfo[NSLocalizedDescriptionKey] code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
           errorBlock(error);
           return;
         }
@@ -563,7 +547,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
   }
 
   if (error) {
-    [self->_logger error:error.userInfo[NSLocalizedDescriptionKey] code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
     errorBlock(error);
     return;
   }
@@ -572,7 +555,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
     NSError *error = [NSError errorWithDomain:EXUpdatesFileDownloaderErrorDomain
                                          code:EXUpdatesFileDownloaderErrorCodeMismatchedManifestFiltersError
                                      userInfo:@{NSLocalizedDescriptionKey: @"Downloaded manifest is invalid; provides filters that do not match its content"}];
-    [self->_logger error:error.userInfo[NSLocalizedDescriptionKey] code:EXUpdatesErrorCodeUpdateHasInvalidSignature];
     errorBlock(error);
   } else {
     successBlock(update);
@@ -603,7 +585,6 @@ certificateChainFromManifestResponse:(nullable NSString *)certificateChainFromMa
     }
 
     if (error) {
-      [self->_logger error:error.userInfo[NSLocalizedDescriptionKey] code:EXUpdatesErrorCodeUpdateFailedToLoad];
       errorBlock(error);
     } else {
       successBlock(data, response);

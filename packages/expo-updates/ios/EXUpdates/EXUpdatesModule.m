@@ -73,6 +73,17 @@ EX_EXPORT_MODULE(ExpoUpdates);
   };
 }
 
+EX_EXPORT_METHOD_AS(setServerUrlAsync,
+                    setServerUrlAsync:(NSString *)serverUrl
+                              resolve:(EXPromiseResolveBlock)resolve
+                               reject:(EXPromiseRejectBlock)reject)
+{
+  if (!_updatesService.config.isEnabled) {
+    reject(@"ERR_UPDATES_DISABLED", @"You cannot reload when expo-updates is not enabled.", nil);
+    return;
+  }
+}
+
 EX_EXPORT_METHOD_AS(reload,
                     reloadAsync:(EXPromiseResolveBlock)resolve
                          reject:(EXPromiseRejectBlock)reject)
@@ -135,38 +146,6 @@ EX_EXPORT_METHOD_AS(checkForUpdateAsync,
     }
   } errorBlock:^(NSError *error) {
     reject(@"ERR_UPDATES_CHECK", error.localizedDescription, error);
-  }];
-}
-
-EX_EXPORT_METHOD_AS(readLogEntriesAsync,
-                     readLogEntriesAsync:(NSNumber *)maxAge
-                                 resolve:(EXPromiseResolveBlock)resolve
-                                  reject:(EXPromiseRejectBlock)reject)
-{
-  EXUpdatesLogReader *reader = [EXUpdatesLogReader new];
-  NSError *error = nil;
-  // maxAge is in milliseconds, convert to seconds to compute NSDate
-  NSTimeInterval age = [maxAge intValue] / 1000;
-  NSDate *epoch = [NSDate dateWithTimeIntervalSinceNow:-age];
-  NSArray<NSDictionary *> *entries = [reader getLogEntriesNewerThan:epoch error:&error];
-  if (error != nil) {
-    reject(@"ERR_UPDATES_READ_LOGS", [error localizedDescription], error);
-  } else {
-    resolve(entries);
-  }
-}
-
-EX_EXPORT_METHOD_AS(clearLogEntriesAsync,
-                     clearLogEntriesAsync:(EXPromiseResolveBlock)resolve
-                                   reject:(EXPromiseRejectBlock)reject)
-{
-  EXUpdatesLogReader *reader = [EXUpdatesLogReader new];
-  [reader purgeLogEntriesOlderThan:[NSDate date] completion:^(NSError *error) {
-    if (error) {
-      reject(@"ERR_UPDATES_READ_LOGS", [error localizedDescription], error);
-    } else {
-      resolve(nil);
-    }
   }];
 }
 
